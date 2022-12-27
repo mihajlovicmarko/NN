@@ -1,0 +1,18 @@
+import pickle
+import nn
+import cv2
+import numpy as np
+
+path = ""
+slika = cv2.imread(path)
+gray_slika = cv2.cvtColor(slika, cv2.COLOR_BGR2GRAY)
+image_array_slika = np.array(gray_slika)
+    
+arch = np.array([[128, 128, 64]])
+image_array_slika = cv2.resize(image_array_slika, (200, 200))
+image_flatten_slika = np.reshape(image_array_slika, (200*200, 1))    
+x_proba = np.array(image_flatten_slika)
+x_proba.resize(4096, 1)
+citaj = open("parametri11", 'rb')
+params0 = pickle.load(citaj)
+np.round(nn.feedForward(x_proba, params0, arch)["yHat"])
