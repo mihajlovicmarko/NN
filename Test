@@ -3,7 +3,7 @@ import nn
 import cv2
 import numpy as np
 
-path = ""
+path = "c1.jpg"
 slika = cv2.imread(path)
 gray_slika = cv2.cvtColor(slika, cv2.COLOR_BGR2GRAY)
 image_array_slika = np.array(gray_slika)
@@ -15,4 +15,7 @@ x_proba = np.array(image_flatten_slika)
 x_proba.resize(4096, 1)
 citaj = open("parametri11", 'rb')
 params0 = pickle.load(citaj)
-np.round(nn.feedForward(x_proba, params0, arch)["yHat"])
+model = nn.Model(x_proba, arch)
+model.Load("parametri11")
+model.feedForward(x_proba)
+print(model.w_dict["yHat"])
