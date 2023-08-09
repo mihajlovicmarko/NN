@@ -4,7 +4,7 @@
 # In[1]:
 
 import numpy as np
-
+import pickle 
 
 # In[2]:
 
@@ -80,7 +80,7 @@ class Model():
     # In[3]:
 
     def feedForwardGeneral(self, x, w_dict):
-        for i in range(np.shape(hSize)[1] + 1):
+        for i in range(np.shape(self.hSize)[1] + 1):
             i+= 1
             if i ==1:
 
@@ -88,7 +88,7 @@ class Model():
                 self.w_dict["a%s" %(i)] = np.maximum(0, self.w_dict["z%s" %(i)])
                 
 
-            elif i != np.shape(hSize)[1] + 1:
+            elif i != np.shape(self.hSize)[1] + 1:
                 self.w_dict["z%s" %(i)] = np.dot(self.w_dict["w%s" %(i)], self.w_dict["a%s" %(i-1)]) + self.w_dict["b%s" %(i)]
                 self.w_dict["a%s" %(i)] = np.maximum(0, self.w_dict["z%s" %(i)])            
             else:
@@ -195,6 +195,3 @@ class Model():
     def Load(self, location):
         with open(location, "br") as f:
             self.w_dict = pickle.load(f)
-
-
-
