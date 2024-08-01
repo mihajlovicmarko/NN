@@ -1,70 +1,197 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# In[1]:
+
 import numpy as np
-from math import factorial
-import matplotlib.pyplot as plt
+import pickle 
 
-class ProbabilityCalculation:
-    def __init__(self, k :int, n:int):
-        self.k = k
-        self.n = n
+# In[2]:
 
-    def binomial_probability(self, p : float) -> float:
-        n = self.n
-        k = self.k
-        other_divisor = n - k
-        larger_divisor = np.maximum(other_divisor, k)
-        smaller_divisor = np.minimum(other_divisor, k)
+class Model():
 
-        comb = np.prod(np.arange(larger_divisor + 1, n + 1), dtype=np.uint64) / factorial(smaller_divisor)
-        return comb * np.power(p, other_divisor) * np.power((1 - p), k)
+    def __init__(self, x, hSize):
+        import pickle
+        import numpy as np
+        self.w_dict = {}
+        self.w_dict["a0"] = x
+        self.w_dict["x"] = x
+        self.hSize = hSize
+        reduced_w = 0.005
+        for i in range(np.shape(hSize)[1] + 1):
+            
+            
+            
+            i+= 1
+            if i ==1:
+                self.w_dict["w%s" %(i)] = np.random.randn(hSize[0][i-1], np.shape(x)[0]) /10
+                self.w_dict["b%s" %(i)] = np.zeros((hSize[0, i -1], 1))
 
-    def calculate_distribution(self) -> list:
-        probabilities = []
-        for i in range(100):
-            probabilities.append(self.binomial_probability(i / 100))
-        self.probabilities = probabilities
-        return probabilities
+                self.w_dict["dw%s" %(i)] = np.zeros((hSize[0][i-1], np.shape(x)[0])) 
+                self.w_dict["db%s" %(i)] = np.zeros((hSize[0, i -1], 1))
+                
+                self.w_dict["V" + str(i)] = np.zeros((np.shape(self.w_dict["w%s" %(i)])))
+                self.w_dict["S" + str(i)] = np.zeros((np.shape(self.w_dict["w%s" %(i)])))
+                self.w_dict["Vb" + str(i)] = np.zeros((np.shape(self.w_dict["b%s" %(i)])))
+                self.w_dict["Sb" + str(i)] = np.zeros((np.shape(self.w_dict["b%s" %(i)])))
 
-    def find_possible_probabilities(self, confidence_interval:float, step=0.1):
-        list_of_probabilities = []
-        n = self.n
-        k = self.k
-        not_k = n - k
-        direction = 1
-        expected_probability = not_k / n
+                
+                self.w_dict["update_weights_value" + str(i)] = np.zeros((np.shape(self.w_dict["w%s" %(i)])))  
+                self.w_dict["update_bias_value" + str(i)] = np.zeros((np.shape(self.w_dict["b%s" %(i)])))
+                
+
+            elif i != np.shape(hSize)[1] + 1:
+                self.w_dict["w%s" %(i)] = np.random.randn(hSize[0][i-1], hSize[0][i-2]) / 10
+                self.w_dict["b%s" %(i)] = np.zeros((hSize[0, i -1], 1))
+                
+                self.w_dict["dw%s" %(i)] = np.zeros((hSize[0][i-1], hSize[0][i-2]))
+                self.w_dict["db%s" %(i)] = np.zeros((hSize[0, i -1], 1))            
+                
+                self.w_dict["V" + str(i)] = np.zeros((np.shape(self.w_dict["w%s" %(i)])))
+                self.w_dict["S" + str(i)] = np.zeros((np.shape(self.w_dict["w%s" %(i)])))
+                self.w_dict["Vb" + str(i)] = np.zeros((np.shape(self.w_dict["b%s" %(i)])))
+                self.w_dict["Sb" + str(i)] = np.zeros((np.shape(self.w_dict["b%s" %(i)])))
+
+                self.w_dict["update_weights_value" + str(i)] = np.zeros((np.shape(self.w_dict["w%s" %(i)])))  
+                self.w_dict["update_bias_value" + str(i)] = np.zeros((np.shape(self.w_dict["b%s" %(i)])))
+                  
+
+            else:
+                self.w_dict["w%s" %(i)] = np.random.randn(1, hSize[0][i-2])/10
+                self.w_dict["b%s" %(i)] = np.zeros((1, 1))
+                
+                self.w_dict["dw%s" %(i)] = np.zeros((1, hSize[0][i-2])) 
+                self.w_dict["db%s" %(i)] = np.zeros((1, 1))
+                
+                self.w_dict["V" + str(i)] = np.zeros((np.shape(self.w_dict["w%s" %(i)])))
+                self.w_dict["S" + str(i)] = np.zeros((np.shape(self.w_dict["w%s" %(i)])))
+                
+                self.w_dict["Vb" + str(i)] = np.zeros((np.shape(self.w_dict["b%s" %(i)])))
+                self.w_dict["Sb" + str(i)] = np.zeros((np.shape(self.w_dict["b%s" %(i)])))
+
+                self.w_dict["update_weights_value" + str(i)] = np.zeros((np.shape(self.w_dict["w%s" %(i)])))  
+                self.w_dict["update_bias_value" + str(i)] = np.zeros((np.shape(self.w_dict["b%s" %(i)])))
+      
+
+
+       # return self.w_dict
+
+
+    # In[3]:
+
+    def feedForwardGeneral(self, x, w_dict):
+        for i in range(np.shape(self.hSize)[1] + 1):
+            i+= 1
+            if i ==1:
+
+                self.w_dict["z%s" %(i)] = np.dot(self.w_dict["w%s" %(i)], x) + self.w_dict["b%s" %(i)]
+                self.w_dict["a%s" %(i)] = np.maximum(0, self.w_dict["z%s" %(i)])
+                
+
+            elif i != np.shape(self.hSize)[1] + 1:
+                self.w_dict["z%s" %(i)] = np.dot(self.w_dict["w%s" %(i)], self.w_dict["a%s" %(i-1)]) + self.w_dict["b%s" %(i)]
+                self.w_dict["a%s" %(i)] = np.maximum(0, self.w_dict["z%s" %(i)])            
+            else:
+                self.w_dict["z%s" %(i)] = np.dot(self.w_dict["w%s" %(i)], self.w_dict["a%s" %(i-1)]) + self.w_dict["b%s" %(i)]
+                self.w_dict["a%s" %(i)] =  self.Sigmoid(self.w_dict["z%s" %(i)]) 
+                self.w_dict["yHat"] = self.w_dict["a%s" %(i)]
+        return self.w_dict
+
+
+    def feedForward(self, x,  miniBatching = False, miniBatchSize = 628):
+        #print(miniBatching)
+        if miniBatching == False:
+            self.w_dict = self.feedForwardGeneral(x, self.w_dict)
         
-        distance = 0
-        area_under_curve = 0
+        return self.w_dict
 
-        for i in range(int(1 / step)):
-            area_under_curve += self.binomial_probability(i * step)
-        
-        cumulative_sum = 0
-        iteration = 0
-        
-        while cumulative_sum < confidence_interval * area_under_curve:
-            probability = expected_probability + distance * direction
-            if 0 < probability < 1:
-                cumulative_sum += self.binomial_probability(probability)
-            direction *= -1
-            if direction < 0:
-                distance += step
-            iteration += 1
-            list_of_probabilities.append(probability)
-        
-        self.probability = list_of_probabilities[-2:]
-        self.relative_area = cumulative_sum / area_under_curve
-        self.distance = distance
 
-    def display(self):
-        plt.plot(self.probabilities)
-        plt.show()
+    # In[4]:
 
-def main():
-    obj = ProbabilityCalculation(5, 10)
-    obj.calculate_distribution()
-    obj.find_possible_probabilities(0.3, step=0.01)
-    obj.display()
-    print(obj.probability)
 
-if __name__ == "__main__":
-    main()
+    def Cost(yHat, y):
+        m = y.shape[1]
+        J = -1 / m * np.sum(np.multiply(np.log(yHat), y) + np.multiply(np.log(1.001 - yHat), (1 - y))) 
+        return J
+
+
+    # In[5]:
+
+
+    def Sigmoid(self, x):
+        sig = 1/(1 + np.exp(-x))
+        return sig
+
+
+    # In[6]:
+
+
+    def Backpropagation(self, x_train,y_train, arch, params0, numIter):
+        for i in range(numIter):
+            self.w_dict = feedForward(x_train, params0, arch)
+            params = UpdateParameters(self.w_dict, y_train, 0.001, 2)
+            cost = Cost(params["yHat"], y_train)
+            #print(params["dw1"][1,1])
+            print(cost)
+        return params
+
+
+    # In[ ]:
+
+
+    def RelDer(x):
+        der = np.greater(x, 0)
+        return der
+
+
+    def UpdateParameters(self, y, learning_rate, number_of_layers, beta1 = .9, beta2 = .99, Adam = True, Regularization = True, lmbd = 0.1, miniBatching = False, miniBatchSize = 628):
+        if miniBatching ==False:
+            if (Regularization != True):
+                lmbd = 0
+            
+            update_weights_value = 0
+            update_bias_value = 0
+            m = self.w_dict["a0"].shape[1]
+            for i in reversed(range(number_of_layers+1)):
+                i+= 1
+                
+                
+                
+                if Adam:
+                    self.w_dict["V" + str(i)] = beta1 * self.w_dict["V" + str(i)] + (1 - beta1) * self.w_dict["dw" + str(i)]
+                    self.w_dict["S" + str(i)] = np.sqrt(beta2 * self.w_dict["S" + str(i)] + (1 - beta2) * np.square(self.w_dict["dw" + str(i)]))
+                    self.w_dict["update_weights_value" + str(i)] = np.divide(self.w_dict["V" + str(i)], self.w_dict["S" + str(i)] + 0.001)
+
+                    self.w_dict["Vb" + str(i)] = beta1 * self.w_dict["Vb" + str(i)] + (1 - beta1) * self.w_dict["db" + str(i)]
+                    self.w_dict["Sb" + str(i)] = np.sqrt(beta2 * self.w_dict["Sb" + str(i)] + (1 - beta2) * np.square(self.w_dict["db" + str(i)]))
+                    self.w_dict["update_bias_value" + str(i)] = np.divide(self.w_dict["Vb" + str(i)], self.w_dict["Sb" + str(i)] + 0.001)
+                else:
+                    self.w_dict["update_weights_value" + str(i)] = self.w_dict["dw%s" %(i)]
+                    self.w_dict["update_bias_value" + str(i)] = self.w_dict["db" + str(i)]
+                
+                #print("V = ", self.w_dict["V" + str(i)].shape)
+                #print("S = ", self.w_dict["S" + str(i)].shape)
+                #print("update = ", self.w_dict["update_weights_value" + str(i)].shape)
+          
+                
+                
+                
+                
+                
+                if(i == number_of_layers +1):
+                    self.w_dict["dz%s" %(i)]  = self.w_dict["yHat"] - y
+                else:
+                    self.w_dict["dz%s"  %(i)] = np.multiply(np.dot(self.w_dict["w%s"%(i+1)].T, self.w_dict["dz%s"  %(i+1)]), RelDer(self.w_dict["z%s"  %(i)]))
+
+                self.w_dict["dw%s"  %(i)] = (np.dot(self.w_dict["a%s" %(i-1)], self.w_dict["dz%s" %(i)].T)).T / m
+                self.w_dict["db%s"  %(i)] = np.sum(self.w_dict["dz%s"  %(i)], axis = 1, keepdims = True) / m
+                
+                
+                self.w_dict["w%s" %(i)] = self.w_dict["w%s" %(i)] - learning_rate * self.w_dict["update_weights_value" + str(i)] -(lmbd / m) * self.w_dict["w%s" %(i)]
+                self.w_dict["b%s" %(i)] = self.w_dict["b%s" %(i)] - learning_rate * self.w_dict["update_bias_value" + str(i)]
+                
+               # print("reg: ", str((lmbd / m ) * np.sum(self.w_dict["w" + str(i)])))
+            return self.w_dict
+    def Load(self, location):
+        with open(location, "br") as f:
+            self.w_dict = pickle.load(f)
